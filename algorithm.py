@@ -1,9 +1,14 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+
+
 GAME_X = 50
 GAME_Y = 50
 SENSE = 20
-INITIAL_ENERGY = 8
+INITIAL_ENERGY = 4
+INITIAL_POPULATION = 100
+FOOD_PER_STEP = 20
 
 MEAN = 0
 SD = 1.0
@@ -107,11 +112,36 @@ class Game:
 
 
 def main():
-    game = Game(1000, 100)
+    game = Game(FOOD_PER_STEP, INITIAL_POPULATION)
     print("Initial state ")
     print("Population: ", len(game.rabbits))
     i = 1
-    while len(game.rabbits) > 0:
+    pop = len(game.rabbits)
+
+    fig, axs = plt.subplots(3)
+    fig.suptitle('Natural Selection Simulation')
+    its = np.array([0])
+    speeds = np.array([1.0])
+    sizes = np.array([1.0])
+    pops = np.array([INITIAL_POPULATION])
+    axs[0].title.set_text("Average speed")
+    axs[0].plot(its, speeds)
+    axs[0].set_xlim([0, 100])
+    axs[0].set_ylim([0, 5])
+    
+    axs[1].title.set_text("Average size")
+    axs[1].plot(its, sizes)
+    axs[1].set_xlim([0, 100])
+    axs[1].set_ylim([0, 5])
+
+    axs[2].title.set_text("Population")
+    axs[2].plot(its, pops)
+    axs[2].set_xlim([0, 100])
+    axs[2].set_ylim([0, 1500])
+    plt.draw()
+
+    while pop > 0:
+        plt.pause(0.5)
         game.movement()
         game.clean()
         game.reproduce()
@@ -121,9 +151,17 @@ def main():
         for r in game.rabbits:
             sum_speed += r.speed
             sum_size += r.size
-        pop = len(game.rabbits)
         print("    Population: ", pop, " Avg. speed: ", sum_speed/pop, " Avg. size: ", sum_size/pop)
+        its = np.append(its, i)
+        speeds = np.append(speeds,  sum_speed/pop)
+        sizes = np.append(sizes,  sum_size/pop)
+        pops = np.append(pops, pop)
+        axs[0].plot(its, speeds)
+        axs[1].plot(its, sizes)
+        axs[2].plot(its, pops)
+        plt.draw()
         i +=1
+        pop = len(game.rabbits)
 
         
 if __name__ == "__main__":
