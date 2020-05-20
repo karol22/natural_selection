@@ -7,11 +7,11 @@ GAME_X = 50
 GAME_Y = 50
 SENSE = 20
 INITIAL_ENERGY = 4
-INITIAL_POPULATION = 100
-FOOD_PER_STEP = 20
+INITIAL_POPULATION = 50
+FOOD_PER_STEP = 100
 
 MEAN = 0
-SD = 1.0
+SD = 0.5
 
 class Rabbit:
     def __init__(self, speed, size):
@@ -124,20 +124,30 @@ def main():
     speeds = np.array([1.0])
     sizes = np.array([1.0])
     pops = np.array([INITIAL_POPULATION])
-    axs[0][1].title.set_text("Average speed")
+
+    xc = np.array([r.posx for r in game.rabbits])
+    yc = np.array([r.posy for r in game.rabbits])
+    ss = np.array([r.size for r in game.rabbits])
+
+    axs[0][0].title.set_text("\n\nDistribution")
+    axs[0][0].scatter(xc, yc, s=ss)
+    axs[0][0].set_xlim([0, GAME_X])
+    axs[0][0].set_ylim([0, GAME_Y])
+
+    axs[0][1].title.set_text("\n\nAverage speed")
     axs[0][1].plot(its, speeds, 'b')
     axs[0][1].set_xlim([0, 100])
     axs[0][1].set_ylim([0, 3])
     
-    axs[1][0].title.set_text("Average size")
+    axs[1][0].title.set_text("\n\nAverage size")
     axs[1][0].plot(its, sizes, 'g')
     axs[1][0].set_xlim([0, 100])
     axs[1][0].set_ylim([0, 5])
 
-    axs[1][1].title.set_text("Population")
+    axs[1][1].title.set_text("\n\nPopulation")
     axs[1][1].plot(its, pops, 'r')
     axs[1][1].set_xlim([0, 100])
-    axs[1][1].set_ylim([0, 1500])
+    axs[1][1].set_ylim([0, 500])
     plt.draw()
 
     while pop > 0:
@@ -158,6 +168,11 @@ def main():
         speeds = np.append(speeds,  sum_speed/pop)
         sizes = np.append(sizes,  sum_size/pop)
         pops = np.append(pops, pop)
+        xc = np.array([r.posx for r in game.rabbits])
+        yc = np.array([r.posy for r in game.rabbits])
+        ss = np.array([r.size for r in game.rabbits])
+        axs[0][0].clear()
+        axs[0][0].scatter(xc, yc, s=ss*5)
         axs[0][1].plot(its, speeds, 'b')
         axs[1][0].plot(its, sizes, 'g')
         axs[1][1].plot(its, pops, 'r')
