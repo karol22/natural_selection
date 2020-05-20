@@ -118,26 +118,26 @@ def main():
     i = 1
     pop = len(game.rabbits)
 
-    fig, axs = plt.subplots(3)
+    fig, axs = plt.subplots(2, 2)
     fig.suptitle('Natural Selection Simulation')
     its = np.array([0])
     speeds = np.array([1.0])
     sizes = np.array([1.0])
     pops = np.array([INITIAL_POPULATION])
-    axs[0].title.set_text("Average speed")
-    axs[0].plot(its, speeds)
-    axs[0].set_xlim([0, 100])
-    axs[0].set_ylim([0, 5])
+    axs[0][1].title.set_text("Average speed")
+    axs[0][1].plot(its, speeds, 'b')
+    axs[0][1].set_xlim([0, 100])
+    axs[0][1].set_ylim([0, 3])
     
-    axs[1].title.set_text("Average size")
-    axs[1].plot(its, sizes)
-    axs[1].set_xlim([0, 100])
-    axs[1].set_ylim([0, 5])
+    axs[1][0].title.set_text("Average size")
+    axs[1][0].plot(its, sizes, 'g')
+    axs[1][0].set_xlim([0, 100])
+    axs[1][0].set_ylim([0, 5])
 
-    axs[2].title.set_text("Population")
-    axs[2].plot(its, pops)
-    axs[2].set_xlim([0, 100])
-    axs[2].set_ylim([0, 1500])
+    axs[1][1].title.set_text("Population")
+    axs[1][1].plot(its, pops, 'r')
+    axs[1][1].set_xlim([0, 100])
+    axs[1][1].set_ylim([0, 1500])
     plt.draw()
 
     while pop > 0:
@@ -148,6 +148,8 @@ def main():
         print("Iteration #", i)
         sum_speed = 0
         sum_size = 0
+        if len(game.rabbits) == 0:
+            break
         for r in game.rabbits:
             sum_speed += r.speed
             sum_size += r.size
@@ -156,9 +158,9 @@ def main():
         speeds = np.append(speeds,  sum_speed/pop)
         sizes = np.append(sizes,  sum_size/pop)
         pops = np.append(pops, pop)
-        axs[0].plot(its, speeds)
-        axs[1].plot(its, sizes)
-        axs[2].plot(its, pops)
+        axs[0][1].plot(its, speeds, 'b')
+        axs[1][0].plot(its, sizes, 'g')
+        axs[1][1].plot(its, pops, 'r')
         plt.draw()
         i +=1
         pop = len(game.rabbits)
