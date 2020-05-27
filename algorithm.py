@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 GAME_X = 50
 GAME_Y = 50
 SENSE = 20
-INITIAL_ENERGY = 20
-INITIAL_POPULATION = 100
+INITIAL_ENERGY = 4
+INITIAL_POPULATION = 10
 FOOD_PER_STEP = 100
 NUM_ITERATIONS = 100
 
@@ -16,19 +16,19 @@ SD_SIZE = 0.2
 SD_SPEED = 0.2
 
 class Rabbit:
-    def __init__(self, speed, size):
+    def __init__(self, speed, size, energy = INITIAL_ENERGY):
         self.speed = speed
         self.size = size
         self.posx = GAME_X * np.random.rand()
         self.posy = GAME_Y * np.random.rand()
-        self.energy_consumption = 0.5 * size**3 * speed**2
-        self.energy_level = INITIAL_ENERGY
+        self.energy_consumption = 0.5 * size**3 * speed**2 
+        self.energy_level = energy
         self.vision = SENSE
     
-    def mutate(self):
+    def mutate(self, energy = INITIAL_ENERGY):
         new_speed = self.speed * 2 ** np.random.normal(MEAN, SD_SPEED, 1)[0]
         new_size  = self.size * 2 ** np.random.normal(MEAN, SD_SIZE, 1)[0]
-        return Rabbit(new_speed, new_size)
+        return Rabbit(new_speed, new_size, energy)
 
 
 class Food:
@@ -87,27 +87,36 @@ class Game:
         for r in self.rabbits:
             if r.energy_level <= 0:
                 continue
+            r.energy_level = r.energy_level - r.energy_consumption
             moved = False
+            closex = 1000
+            closey = 1000
+            closef = Food()
+            for f in self.foods:
+                if (r.posx - f.posx)**2 + (r.posy - f.posy)**2 < (r.posx - closex)**2 + (r.posy - closey)**2:
+                    closex = f.posx
+                    closey = f.posy
+                    closef = f
+
             for f in self.foods:
                 if moved:
                     break
-                if isclose(r.vision, r.posx, r.posy, f.posx, f.posx) and f.available:
-                    ddx = f.posx - r.posx
-                    ddy = f.posy - r.posy
+                if  closef.available:
+                    ddx = closef.posx - r.posx
+                    ddy = closef.posy - r.posy
                     dist = np.sqrt(ddx**2 + ddy**2)
                     prop = 1 if r.speed >= dist else r.speed/dist
                     r.posx, r.posy = r.posx + prop * ddx, r.posy + prop * ddy
                     if(prop == 1):
                         r.energy_level = r.energy_level + 1
-                        f.available = False
-                        planta = planta + 1
+                        closef.available = False
                     moved = True
                     break
             if moved:
                 continue
             for presa in self.rabbits:
                 if isclose(r.vision, r.posx, r.posy, presa.posx, presa.posy):
-                    if(r.size >= 1.3 * presa.size):
+                    if(r.size**3 >= 2 * presa.size):
                         ddx = presa.posx - presa.posx
                         ddy = presa.posy - presa.posy
                         dist = np.sqrt(ddx**2 + ddy**2)
@@ -118,17 +127,23 @@ class Game:
                             presa.energy_level = 0
                             f.available = False
                         moved = True
-                        comidos = comidos + 1
                         break
                     if not moved:        
                         r.posx, r.posy = new_point(r.posx, r.posy, r.vision)
                         moved = True
-            r.energy_level = r.energy_level - r.energy_consumption
-        # print("Plantas: ", planta, "  Comidos: ", comidos)
+            r = r.mutate(r.energy_level)
     
 
 
 def main():
+    """
+    r = Rabbit(1, 1)
+    print(r.speed, r.size, r.energy_consumption, r.energy_level)
+    for i in range(100):
+        r = r.mutate()
+        print(r.speed, r.size, r.energy_consumption, r.energy_level)
+    """
+    
     game = Game(FOOD_PER_STEP, INITIAL_POPULATION)
     print("Initial state ")
     print("Population: ", len(game.rabbits))
@@ -154,6 +169,8 @@ def main():
     axs[0][0].scatter(xp, yp, marker='^', s=1.0, color = 'g')
     axs[0][0].set_xlim([0, GAME_X])
     axs[0][0].set_ylim([0, GAME_Y])
+    axs[0][0].set_xticklabels([])
+    axs[0][0].set_yticklabels([])
 
     axs[0][1].plot(its, speeds, 'b')
     axs[0][1].set_xlim([0, 100])
@@ -174,7 +191,10 @@ def main():
     axs[1][1].set_ylabel('Population')
     plt.draw()
 
-    while pop > 0:
+    while True > 0:
+        if len(game.rabbits) == 0:
+            plt.pause(0.5)
+            continue
         plt.pause(0.5)
         game.movement()
         game.clean()
@@ -182,12 +202,12 @@ def main():
         print("Iteration #", i)
         sum_speed = 0
         sum_size = 0
-        if len(game.rabbits) == 0:
-            break
+        sum_energy = 0
         for r in game.rabbits:
             sum_speed += r.speed
             sum_size += r.size
-        print("    Population: ", pop, " Avg. speed: ", sum_speed/pop, " Avg. size: ", sum_size/pop)
+            sum_energy += r.energy_level
+        print("    Population: ", pop, " Avg. speed: ", sum_speed/pop, " Avg. size: ", sum_size/pop, " Avg. energy: ", sum_energy/pop)
         its = np.append(its, i)
         speeds = np.append(speeds,  sum_speed/pop)
         sizes = np.append(sizes,  sum_size/pop)
@@ -200,21 +220,24 @@ def main():
         axs[0][0].clear()
         axs[0][0].scatter(xc, yc, s=ss*5, color='r')
         axs[0][0].scatter(xp, yp, marker='^', s=1.0, color = 'g')
+        axs[0][0].set_xticklabels([])
+        axs[0][0].set_yticklabels([])       
 
         axs[0][1].plot(its, speeds, 'b')
         axs[0][1].set_xlim([0, max(NUM_ITERATIONS, i+10)])
-        axs[0][1].set_ylim([0, max(3, sum_speed/pop + 1)])
+        axs[0][1].set_ylim([0, max(3, max(speeds) + 1)])
 
         axs[1][0].plot(its, sizes, 'g')
         axs[1][0].set_xlim([0, max(NUM_ITERATIONS, i+10)])
-        axs[1][0].set_ylim([0, max(3, sum_size/pop + 1)])
+        axs[1][0].set_ylim([0, max(3, max(sizes) + 1)])
 
         axs[1][1].plot(its, pops, 'r')
         axs[1][1].set_xlim([0, max(NUM_ITERATIONS, i+10)])
         axs[1][1].set_ylim([0, max(500, pop + 100)])
         plt.draw()
         i +=1
-        pop = len(game.rabbits)
+    
+
 
         
 if __name__ == "__main__":
